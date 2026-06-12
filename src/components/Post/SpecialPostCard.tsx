@@ -218,29 +218,63 @@ export const SpecialPostCard = ({
     const isDetail = mode === "detail";
     const f = busquedas_json.filtros ?? {};
 
-    // Operación (venta/renta), puede venir vacía
-    const operacion: string =
-      typeof f.operacion === "string" ? f.operacion.toLowerCase() : "";
+    // Operación (venta/renta). Soporta múltiple (operaciones[]) y legacy (operacion string)
+    const operaciones: string[] = (
+      Array.isArray(f.operaciones) && f.operaciones.length > 0
+        ? f.operaciones
+        : typeof f.operacion === "string" && f.operacion
+          ? [f.operacion]
+          : []
+    )
+      .map((o: any) => String(o).toLowerCase())
+      .filter((o: string) => o === "venta" || o === "renta");
 
-    // Título grande: subtipo principal o tipo_propiedad
-    const subtipoArr: string[] = Array.isArray(f.subtipo) ? f.subtipo : [];
-    const rawTipo = subtipoArr[0] || f.tipo_propiedad || "Propiedad";
+    // Título grande: tipo de propiedad (o primer subtipo si no hay tipo).
+    // Soporta el schema legacy donde `subtipo` venía como string suelto.
+    const subtipoArr: string[] = Array.isArray(f.subtipo)
+      ? f.subtipo.filter(
+          (s: unknown) =>
+            typeof s === "string" && (s as string).trim().length > 0,
+        )
+      : typeof f.subtipo === "string" && f.subtipo.trim()
+        ? [f.subtipo]
+        : [];
+    const rawTipo = f.tipo_propiedad || subtipoArr[0] || "Propiedad";
     const titulo = firstUpperCase(rawTipo);
 
-    // Presupuesto formateado
+    // Rango(s) de presupuesto: compra y/o renta
     const moneda = f.moneda || "MXN";
-    const precioMin =
-      typeof f.precio_min === "number" && f.precio_min > 0 ? f.precio_min : null;
-    const precioMax =
-      typeof f.precio_max === "number" && f.precio_max > 0 ? f.precio_max : null;
-    let presupuestoText = "Sin especificar";
-    if (precioMin && precioMax) {
-      presupuestoText = `${formatPrice(precioMin)} – ${formatPrice(precioMax)} ${moneda}`;
-    } else if (precioMin) {
-      presupuestoText = `Desde ${formatPrice(precioMin)} ${moneda}`;
-    } else if (precioMax) {
-      presupuestoText = `Hasta ${formatPrice(precioMax)} ${moneda}`;
-    }
+    const precioNum = (v: unknown): number | null =>
+      typeof v === "number" && v > 0 ? v : null;
+    const fmtRango = (
+      min: number | null,
+      max: number | null,
+    ): string | null => {
+      if (min && max)
+        return `${formatPrice(min)} – ${formatPrice(max)} ${moneda}`;
+      if (min) return `Desde ${formatPrice(min)} ${moneda}`;
+      if (max) return `Hasta ${formatPrice(max)} ${moneda}`;
+      return null;
+    };
+    const ventaRango = fmtRango(precioNum(f.precio_min), precioNum(f.precio_max));
+    const rentaRango = fmtRango(
+      precioNum(f.precio_renta_min),
+      precioNum(f.precio_renta_max),
+    );
+    const hayAmbosPrecios = !!ventaRango && !!rentaRango;
+    const presupuestos: Array<{ label: string; text: string }> = [];
+    if (ventaRango)
+      presupuestos.push({
+        label: hayAmbosPrecios ? "Presupuesto · Compra" : "Presupuesto",
+        text: ventaRango,
+      });
+    if (rentaRango)
+      presupuestos.push({
+        label: hayAmbosPrecios ? "Presupuesto · Renta" : "Presupuesto",
+        text: rentaRango,
+      });
+    if (presupuestos.length === 0)
+      presupuestos.push({ label: "Presupuesto", text: "Sin especificar" });
 
     // Zonas (chips)
     const zonas: Array<{ id?: string; label: string }> = Array.isArray(
@@ -282,9 +316,109 @@ export const SpecialPostCard = ({
               .slice(0, 1)
       : [];
 
-    const habitaciones = f.caracteristicas?.habitaciones;
-    const banos = f.caracteristicas?.banos;
+    // Características y superficies: mostramos todo lo que el usuario llenó
+    const num = (v: unknown): number | null =>
+      typeof v === "number" && v > 0 ? v : null;
+    const fmt = (n: number): string =>
+      String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+    const habitaciones = num(f.caracteristicas?.habitaciones);
+    const banos = num(f.caracteristicas?.banos);
+    const estacionamientos = num(f.caracteristicas?.estacionamientos);
+    const niveles = num(f.caracteristicas?.niveles);
+    const antiguedad: string =
+      typeof f.caracteristicas?.antiguedad === "string"
+        ? f.caracteristicas.antiguedad.trim()
+        : "";
+
+    // Superficies mínimas → el post indica que se busca "más de" (+) esa cantidad
+    const m2TerrenoMin = num(f.superficies?.m2_terreno_min);
+    const m2ConstruccionMin = num(f.superficies?.m2_construccion_min);
+
+    const stats: Array<{
+      key: string;
+      emoji: string;
+      value: string;
+      label: string;
+    }> = [];
+    if (habitaciones)
+      stats.push({
+        key: "rec",
+        emoji: "🛏️",
+        value: String(habitaciones),
+        label: "rec.",
+      });
+    if (banos)
+      stats.push({
+        key: "ban",
+        emoji: "🚽",
+        value: String(banos),
+        label: "baños",
+      });
+    if (estacionamientos)
+      stats.push({
+        key: "est",
+        emoji: "🚗",
+        value: String(estacionamientos),
+        label: "estac.",
+      });
+    if (niveles)
+      stats.push({
+        key: "niv",
+        emoji: "🏢",
+        value: String(niveles),
+        label: niveles === 1 ? "planta" : "plantas",
+      });
+
     const nota: string = typeof f.nota === "string" ? f.nota : "";
+
+    // Detalles especializados según tipo (comercial / industrial / agrícola)
+    const joinArr = (v: unknown): string =>
+      Array.isArray(v)
+        ? v.filter(Boolean).join(", ")
+        : typeof v === "string"
+          ? v
+          : "";
+    const especializados: Array<{ key: string; value: string }> = [];
+    const detAdd = (key: string, value: string) => {
+      if (value && value.trim()) especializados.push({ key, value });
+    };
+    if (f.comercial) {
+      const c = f.comercial;
+      detAdd("Ubicación", joinArr(c.tipoUbicacion));
+      if (c.frenteMin) detAdd("Frente mín.", `${c.frenteMin} m`);
+      if (c.nivel) detAdd("Nivel", String(c.nivel));
+      const flags: string[] = [];
+      if (c.sobreAvenidaPrincipal) flags.push("Av. principal");
+      if (c.enEsquina) flags.push("En esquina");
+      if (c.altaVisibilidad) flags.push("Alta visibilidad");
+      if (c.altoFlujoVehicular) flags.push("Alto flujo");
+      detAdd("Características", flags.join(", "));
+    }
+    if (f.industrial) {
+      const it = f.industrial;
+      detAdd("Ubicación", joinArr(it.ubicacion));
+      detAdd("Altura libre", joinArr(it.alturaLibre));
+      detAdd("Energía", joinArr(it.energiaKva));
+      if (it.areaOficinasMin)
+        detAdd("Oficinas mín.", `${it.areaOficinasMin} m²`);
+      if (it.patioManiobrasMin)
+        detAdd("Patio maniobras mín.", `${it.patioManiobrasMin} m²`);
+    }
+    if (f.agricola) {
+      const a = f.agricola;
+      detAdd("Agua", joinArr(a.tiposAgua));
+      if (a.concesionAgua) detAdd("Concesión de agua", "Sí");
+      detAdd("Uso de terreno", joinArr(a.usoTerreno));
+      detAdd("Tipo de riego", joinArr(a.tipoRiego));
+      const serv: string[] = [];
+      if (a.electricidad) serv.push("Electricidad");
+      if (a.caminoAcceso) serv.push("Camino de acceso");
+      if (a.cercado) serv.push("Cercado");
+      if (a.pieCarretera) serv.push("Pie de carretera");
+      if (a.accesCamiones) serv.push("Acceso camiones");
+      detAdd("Servicios", serv.join(", "));
+    }
 
     const handleOffer = onOfferClick ?? onUserClick;
 
@@ -293,31 +427,52 @@ export const SpecialPostCard = ({
         className={`w-full bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden ${isDetail ? "" : "max-w-md mx-auto"}`}
       >
         <div className="p-5 md:p-6">
-          {/* SE BUSCA + Operación */}
-          <div className="flex items-center gap-2 mb-3">
+          {/* SE BUSCA + Operación(es) */}
+          <div className="flex items-center flex-wrap gap-2 mb-3">
             <Search className="w-4 h-4 text-primary" />
             <span className="text-xs font-extrabold text-primary tracking-wider">
               SE BUSCA
             </span>
-            {(operacion === "venta" || operacion === "renta") && (
-              <span className="ml-1 px-2 py-0.5 rounded-full bg-primary text-white text-[10px] font-extrabold tracking-wide">
-                {operacion === "venta" ? "EN VENTA" : "EN RENTA"}
+            {operaciones.map((op) => (
+              <span
+                key={op}
+                className="ml-1 px-2 py-0.5 rounded-full bg-primary text-white text-[10px] font-extrabold tracking-wide"
+              >
+                {op === "venta" ? "EN VENTA" : "EN RENTA"}
               </span>
-            )}
+            ))}
           </div>
 
           {/* Título grande */}
-          <h3 className="text-2xl font-extrabold text-gray-900 leading-tight mb-4">
+          <h3 className="text-2xl font-extrabold text-gray-900 leading-tight mb-3">
             {titulo}
           </h3>
 
-          {/* Presupuesto */}
-          <p className="text-[11px] font-bold text-gray-400 tracking-wide uppercase mb-1">
-            Presupuesto
-          </p>
-          <p className="text-lg font-extrabold text-gray-900 mb-4">
-            {presupuestoText}
-          </p>
+          {/* Subtipos seleccionados (todos) */}
+          {subtipoArr.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {subtipoArr.map((s, idx) => (
+                <span
+                  key={`${s}-${idx}`}
+                  className="px-3 py-1.5 rounded-2xl bg-primary/10 border border-primary/25 text-sm font-bold text-primary"
+                >
+                  {firstUpperCase(s)}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Presupuesto(s): compra y/o renta */}
+          {presupuestos.map((p, i) => (
+            <div key={i}>
+              <p className="text-[11px] font-bold text-gray-400 tracking-wide uppercase mb-1">
+                {p.label}
+              </p>
+              <p className="text-lg font-extrabold text-gray-900 mb-4">
+                {p.text}
+              </p>
+            </div>
+          ))}
 
           {/* Zonas de interés */}
           {(zonas.length > 0 || ubicacionFallback.length > 0) && (
@@ -349,20 +504,86 @@ export const SpecialPostCard = ({
           )}
 
           {/* Características */}
-          {(habitaciones || banos) && (
-            <div className="flex flex-row gap-6 text-sm text-gray-600">
-              {habitaciones ? (
-                <span>
-                  🛏️ <span className="font-bold text-gray-900">{habitaciones}</span>{" "}
-                  rec.
-                </span>
-              ) : null}
-              {banos ? (
-                <span>
-                  🚽 <span className="font-bold text-gray-900">{banos}</span> baños
-                </span>
-              ) : null}
-            </div>
+          {stats.length > 0 && (
+            <>
+              <p className="text-[11px] font-bold text-gray-400 tracking-wide uppercase mb-2">
+                Características
+              </p>
+              <div className="flex flex-row flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600 mb-4">
+                {stats.map((s) => (
+                  <span key={s.key}>
+                    {s.emoji}{" "}
+                    <span className="font-bold text-gray-900">{s.value}</span>{" "}
+                    {s.label}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Superficie mínima → se busca "más de" (+) esa cantidad */}
+          {(m2TerrenoMin || m2ConstruccionMin) && (
+            <>
+              <p className="text-[11px] font-bold text-gray-400 tracking-wide uppercase mb-2">
+                Superficie
+              </p>
+              <div className="flex flex-row flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600 mb-4">
+                {m2TerrenoMin ? (
+                  <span>
+                    📐{" "}
+                    <span className="font-bold text-gray-900">
+                      +{fmt(m2TerrenoMin)} m²
+                    </span>{" "}
+                    terreno
+                  </span>
+                ) : null}
+                {m2ConstruccionMin ? (
+                  <span>
+                    🏗️{" "}
+                    <span className="font-bold text-gray-900">
+                      +{fmt(m2ConstruccionMin)} m²
+                    </span>{" "}
+                    construcción
+                  </span>
+                ) : null}
+              </div>
+            </>
+          )}
+
+          {/* Antigüedad */}
+          {antiguedad.length > 0 && (
+            <>
+              <p className="text-[11px] font-bold text-gray-400 tracking-wide uppercase mb-1">
+                Antigüedad
+              </p>
+              <p className="text-base font-semibold text-gray-900 mb-4">
+                {antiguedad}
+              </p>
+            </>
+          )}
+
+          {/* Detalles especializados (comercial / industrial / agrícola) */}
+          {especializados.length > 0 && (
+            <>
+              <p className="text-[11px] font-bold text-gray-400 tracking-wide uppercase mb-2">
+                Detalles
+              </p>
+              <div className="flex flex-col gap-1.5 mb-4">
+                {especializados.map((d, i) => (
+                  <div
+                    key={`${d.key}-${i}`}
+                    className="flex justify-between items-start gap-3"
+                  >
+                    <span className="text-[13px] text-gray-400 shrink-0">
+                      {d.key}
+                    </span>
+                    <span className="text-[13px] text-gray-900 font-medium text-right">
+                      {d.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
 
           {/* Nota */}
