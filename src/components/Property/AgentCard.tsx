@@ -1,3 +1,4 @@
+import { Phone } from "lucide-react";
 import Avatar from "../Shared/Avatar";
 import type { perfiles } from "../types";
 
@@ -46,6 +47,19 @@ export function AgentCard({ agent, onClick }: AgentCardProps) {
             <p className="text-xs text-primary font-semibold mt-0.5">
               {occupation}
             </p>
+          )}
+          {agent.celular && (
+            <a
+              href={`tel:${(agent.prefijo_celular ?? "") + agent.celular}`}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1.5 text-xs text-gray-600 mt-1 w-fit hover:text-primary transition-colors"
+            >
+              <Phone className="w-3.5 h-3.5 text-primary" />
+              <span>
+                {agent.prefijo_celular ? `${agent.prefijo_celular} ` : ""}
+                {agent.celular}
+              </span>
+            </a>
           )}
           {/* <div className="flex items-center gap-3 mt-2">
             {agent.email && (

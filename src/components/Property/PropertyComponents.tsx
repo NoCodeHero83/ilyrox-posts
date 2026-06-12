@@ -11,6 +11,7 @@ import {
 import type { Property } from "../types";
 import { CardFeature } from "./CardFeature";
 import { ImageCarousel } from "../Shared/ImageCarousel";
+import { CopyableId } from "./CopyableId";
 
 interface MainImageProps {
   property: Property;
@@ -36,7 +37,11 @@ export function MainImage({ property }: MainImageProps) {
       >
         {/* Banner ID / Fecha */}
         <div className="absolute bottom-0 bg-black/40 backdrop-blur-md md:rounded-b-3xl text-gray-200/80 text-xs px-2 py-1 font-bold w-full">
-          <span className="p-2">ID: {property.codigo_propiedad}</span>
+          {property.codigo_propiedad ? (
+            <CopyableId id={property.codigo_propiedad} className="p-2" />
+          ) : (
+            <span className="p-2">ID: —</span>
+          )}
           <span>•</span>
           <span>
             Publicado el{" "}
