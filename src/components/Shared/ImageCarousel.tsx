@@ -88,7 +88,7 @@ export function ImageCarousel({
             alt={`${alt} - ${i + 1}`}
             loading={i === 0 ? "eager" : "lazy"}
             draggable={false}
-            className={`w-full h-full shrink-0 snap-start ${imageClassName}`}
+            className={`w-full h-full shrink-0 snap-start snap-always ${imageClassName}`}
           />
         ))}
       </div>
