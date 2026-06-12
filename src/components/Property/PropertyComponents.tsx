@@ -7,7 +7,6 @@ import {
   MoveDiagonal,
   Home,
   Building,
-  CircleDollarSign,
 } from "lucide-react";
 import type { Property } from "../types";
 import { CardFeature } from "./CardFeature";
@@ -178,86 +177,6 @@ export function PropertyInfo({ property, hideData }: PropertyInfoProps) {
           {property.descripcion}
         </p>
       </div>
-
-      {/* Commission Information Section - Only visible if not hideData */}
-      {!hideData &&
-        property.operaciones_propiedad?.some(
-          (op) => op.comision_tipo || op.comparte_comision,
-        ) && (
-          <div className="py-1 mt-2 border-b border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <CircleDollarSign className="w-5 h-5 text-primary" />
-              Comisiones y Operación
-            </h3>
-            <div className="grid grid-cols-1 gap-3">
-              {property.operaciones_propiedad.map((op) => {
-                const hasCommission =
-                  op.comision_tipo &&
-                  (op.comision_porcentaje || op.comision_monto_fijo);
-                const hasShared = op.comparte_comision;
-
-                if (!hasCommission && !hasShared) return null;
-
-                return (
-                  <div
-                    key={op.id}
-                    className="bg-blue-400/30 backdrop-blur-sm p-2 rounded-2xl border border-blue-400 hover:bg-blue-500/20 transition-colors"
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span
-                        className={`px-1 rounded-full text-sm font-bold uppercase tracking-wider text-blue-900`}
-                      >
-                        {op.tipo_operacion === "renta" ? "Renta" : "Venta"}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
-                      {hasCommission && (
-                        <div className="flex justify-between items-center p-1">
-                          <span className="text-sm text-blue-500 font-medium">
-                            Comisión
-                          </span>
-                          <span className="text-sm font-bold text-blue-900">
-                            {op.comision_tipo === "porcentaje" ||
-                            op.comision_tipo === "mixto"
-                              ? `${op.comision_porcentaje}%`
-                              : `$${op.comision_monto_fijo?.toLocaleString()}`}
-                          </span>
-                        </div>
-                      )}
-
-                      {hasShared && (
-                        <div className="flex justify-between items-center p-1">
-                          <span className="text-sm text-blue-500 font-medium">
-                            Comparte
-                          </span>
-                          <span className="text-sm font-bold text-blue-900">
-                            {op.porcentaje_comision_compartida
-                              ? `${op.porcentaje_comision_compartida}%`
-                              : op.monto_comision_compartida
-                                ? `$${op.monto_comision_compartida.toLocaleString()}`
-                                : "Sí"}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {op.condiciones_comision_compartida && (
-                      <div className="mt-3 pt-2 border-t border-gray-100">
-                        <p className="text-[11px] text-gray-400 leading-relaxed">
-                          <span className="font-bold uppercase text-[9px] mr-1">
-                            Condiciones:
-                          </span>
-                          {op.condiciones_comision_compartida}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
       {property.latitud && property.longitud && (
         <div className="py-4 flex justify-center gap-5">

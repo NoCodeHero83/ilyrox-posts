@@ -41,9 +41,6 @@ export function AgentCard({ agent, onClick }: AgentCardProps) {
             <h3 className="font-bold text-gray-900 leading-tight">
               {agent.nombre_completo}
             </h3>
-            <div className="flex items-center bg-yellow-400/10 text-yellow-700 px-1.5 py-0.5 rounded text-[10px] font-bold">
-              <span className="mr-0.5">★</span> {agent.calificacion_promedio}
-            </div>
           </div>
           {occupation && (
             <p className="text-xs text-primary font-semibold mt-0.5">

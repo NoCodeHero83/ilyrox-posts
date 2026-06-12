@@ -16,7 +16,7 @@ export function GeneratedByIlyrox({ className = "" }: GeneratedByIlyroxProps) {
         alt="Ilyrox"
         className="w-4 h-4 rounded-full object-cover"
       />
-      <span>Generado por Ilyrox</span>
+      <span>Generado por ILYROX</span>
     </div>
   );
 }
