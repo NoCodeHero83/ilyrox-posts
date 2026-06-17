@@ -58,6 +58,33 @@ export type Property = {
   latitud?: string;
   subtipo?: string;
   pisos?: number;
+  // Características físicas adicionales
+  medios_banos?: number;
+  ancho_terreno?: number;
+  largo_terreno?: number;
+  // Comercial
+  tipo_ubicacion_comercial?: string;
+  nivel_piso?: number;
+  sobre_avenida_principal?: boolean;
+  en_esquina?: boolean;
+  alta_visibilidad?: boolean;
+  alto_flujo_vehicular?: boolean;
+  // Industrial
+  ubicacion_industrial?: string;
+  altura_libre_m?: string;
+  area_oficinas_m2?: number;
+  patio_maniobras_m2?: number;
+  tipo_energia_kva?: string[];
+  // Agrícola
+  uso_terreno?: string[];
+  tipo_riego?: string[];
+  tipo_agua?: string[];
+  concesion_agua?: boolean;
+  infra_electricidad?: boolean;
+  infra_camino_acceso?: boolean;
+  infra_cercado?: boolean;
+  acceso_carretera?: boolean;
+  acceso_camiones?: boolean;
 };
 
 export type operaciones_propiedad = {
