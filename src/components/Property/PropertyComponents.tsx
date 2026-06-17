@@ -1,13 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  Bed,
-  Bath,
-  Car,
-  MapPin,
-  MoveDiagonal,
-  Home,
-  Building,
-} from "lucide-react";
+import { MapPin } from "lucide-react";
 import type { Property } from "../types";
 import { CardFeature } from "./CardFeature";
 import { ImageCarousel } from "../Shared/ImageCarousel";
@@ -68,6 +60,77 @@ interface PropertyInfoProps {
 }
 
 export function PropertyInfo({ property, hideData }: PropertyInfoProps) {
+  const tipo = (property.tipo || "").toLowerCase();
+  const num = (v?: number) => (typeof v === "number" ? v : 0);
+
+  // Características comunes — solo se muestran si tienen valor (> 0).
+  const common: { value: string | number; text: string }[] = [];
+  if (num(property.habitaciones) > 0)
+    common.push({ value: property.habitaciones!, text: "Rec." });
+  if (num(property.banos) > 0)
+    common.push({ value: property.banos!, text: "Baños" });
+  if (num(property.medios_banos) > 0)
+    common.push({ value: property.medios_banos!, text: "½ Baños" });
+  if (num(property.estacionamientos) > 0)
+    common.push({ value: property.estacionamientos!, text: "Estac." });
+  if (num(property.pisos) > 0)
+    common.push({ value: property.pisos!, text: "Niveles" });
+  if (num(property.metros_cuadrados_construccion) > 0)
+    common.push({ value: `${property.metros_cuadrados_construccion} m²`, text: "Construcción" });
+  if (num(property.metros_cuadrados_terreno) > 0)
+    common.push({ value: `${property.metros_cuadrados_terreno} m²`, text: "Terreno" });
+  if (num(property.ancho_terreno) > 0)
+    common.push({ value: `${property.ancho_terreno} m`, text: "Frente" });
+  if (num(property.largo_terreno) > 0)
+    common.push({ value: `${property.largo_terreno} m`, text: "Fondo" });
+
+  // Características específicas por tipo (replican el detalle de la app).
+  const typeStats: { label: string; value: string }[] = [];
+  const typeChips: { label: string; items: string[] }[] = [];
+  const typeFlags: string[] = [];
+  let sectionTitle = "";
+
+  if (tipo === "comercial") {
+    sectionTitle = "Características Comerciales";
+    if (property.tipo_ubicacion_comercial)
+      typeStats.push({ label: "Ubicación", value: property.tipo_ubicacion_comercial });
+    if (num(property.nivel_piso) > 0)
+      typeStats.push({ label: "Nivel de piso", value: String(property.nivel_piso) });
+    if (property.sobre_avenida_principal) typeFlags.push("Sobre Avenida Principal");
+    if (property.en_esquina) typeFlags.push("En Esquina");
+    if (property.alta_visibilidad) typeFlags.push("Alta Visibilidad");
+    if (property.alto_flujo_vehicular) typeFlags.push("Alto Flujo Vehicular");
+  } else if (tipo === "industrial") {
+    sectionTitle = "Características Industriales";
+    if (property.ubicacion_industrial)
+      typeStats.push({ label: "Ubicación", value: property.ubicacion_industrial });
+    if (property.altura_libre_m)
+      typeStats.push({ label: "Altura Libre", value: property.altura_libre_m });
+    if (num(property.area_oficinas_m2) > 0)
+      typeStats.push({ label: "Área Operativa", value: `${property.area_oficinas_m2} m²` });
+    if (num(property.patio_maniobras_m2) > 0)
+      typeStats.push({ label: "Patio de Maniobras", value: `${property.patio_maniobras_m2} m²` });
+    if (property.tipo_energia_kva?.length)
+      typeChips.push({ label: "Energía (kVA)", items: property.tipo_energia_kva });
+  } else if (tipo === "agricola") {
+    sectionTitle = "Características Agrícolas";
+    if (property.uso_terreno?.length)
+      typeChips.push({ label: "Uso de Terreno", items: property.uso_terreno });
+    if (property.tipo_riego?.length)
+      typeChips.push({ label: "Sistema de Riego", items: property.tipo_riego });
+    if (property.tipo_agua?.length)
+      typeChips.push({ label: "Fuente de Agua", items: property.tipo_agua });
+    if (property.concesion_agua) typeFlags.push("Concesión de Agua");
+    if (property.infra_electricidad) typeFlags.push("Electricidad");
+    if (property.infra_camino_acceso) typeFlags.push("Acceso/Camino");
+    if (property.infra_cercado) typeFlags.push("Cercado");
+    if (property.acceso_carretera) typeFlags.push("A pie de Carretera");
+    if (property.acceso_camiones) typeFlags.push("Acceso para tráiler");
+  }
+
+  const hasTypeSection =
+    typeStats.length > 0 || typeChips.length > 0 || typeFlags.length > 0;
+
   return (
     <div className="mt-4 space-y-3">
       <div className="flex justify-between items-start">
@@ -123,39 +186,64 @@ export function PropertyInfo({ property, hideData }: PropertyInfoProps) {
         </div>
       </div>
 
-      {/* Features Grid */}
-      <div className="flex flex-wrap items-center justify-center gap-2 p-3 bg-gray-50/50 rounded-2xl border border-gray-100/50 -my-1">
-        <CardFeature
-          value={property.habitaciones || 0}
-          text="Rec."
-          icon={<Bed className="w-5 h-5 text-gray-400" />}
-        />
-        <CardFeature
-          value={property.banos || 0}
-          text="Baños"
-          icon={<Bath className="w-5 h-5 text-gray-400" />}
-        />
-        <CardFeature
-          value={property.estacionamientos || 0}
-          text="Estac."
-          icon={<Car className="w-5 h-5 text-gray-400" />}
-        />
-        <CardFeature
-          value={property.pisos || 0}
-          text="Niv."
-          icon={<Building className="w-5 h-5 text-gray-400" />}
-        />
-        <CardFeature
-          value={`${property.metros_cuadrados_construccion || 0} m²`}
-          text="Const"
-          icon={<Home className="w-5 h-5 text-gray-400" />}
-        />
-        <CardFeature
-          value={`${property.metros_cuadrados_terreno || 0} m²`}
-          text="Terr."
-          icon={<MoveDiagonal className="w-5 h-5 text-gray-400" />}
-        />
-      </div>
+      {/* Características comunes — solo texto, sin íconos (omiten valores en 0) */}
+      {common.length > 0 && (
+        <div className="flex flex-wrap items-center justify-center gap-2 p-3 bg-gray-50/50 rounded-2xl border border-gray-100/50 -my-1">
+          {common.map((c) => (
+            <CardFeature key={c.text} value={c.value} text={c.text} />
+          ))}
+        </div>
+      )}
+
+      {/* Características específicas por tipo — solo texto */}
+      {hasTypeSection && (
+        <div className="border-b border-gray-100 pb-3">
+          <h3 className="text-lg font-bold text-gray-900 mb-2">{sectionTitle}</h3>
+
+          {typeStats.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {typeStats.map((s) => (
+                <div
+                  key={s.label}
+                  className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg text-sm"
+                >
+                  <span className="text-gray-400 font-medium">{s.label}: </span>
+                  <span className="font-semibold text-gray-900">{s.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {typeChips.map((g) => (
+            <div key={g.label} className="mb-2">
+              <p className="text-sm font-semibold text-gray-500 mb-1">{g.label}</p>
+              <div className="flex flex-wrap gap-2">
+                {g.items.map((it) => (
+                  <div
+                    key={it}
+                    className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-700"
+                  >
+                    {it}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {typeFlags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {typeFlags.map((flag) => (
+                <div
+                  key={flag}
+                  className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-700"
+                >
+                  {flag}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Amenities Section */}
       {property.propiedades_amenidades &&
