@@ -70,7 +70,9 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
 
           <div className="flex flex-col gap-3">
             <a
-              href="#"
+              href="https://apps.apple.com/us/app/ilyrox/id6756507569"
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-4 bg-gray-900 text-white p-4 rounded-2xl hover:bg-gray-800 transition-all hover:scale-[1.02] active:scale-100 group shadow-lg"
             >
               <div className="bg-white/10 p-2 rounded-xl">
@@ -85,7 +87,9 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
             </a>
 
             <a
-              href="#"
+              href="https://play.google.com/store/apps/details?id=com.ilyrox.app&hl=es_BO"
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-4 bg-[#202124] text-white p-4 rounded-2xl hover:bg-gray-800 transition-all hover:scale-[1.02] active:scale-100 group shadow-lg"
             >
               <div className="bg-white/10 p-2 rounded-xl">
