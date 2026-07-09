@@ -2,6 +2,14 @@
 import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+// Mismos límites que el feed de la app: una foto vertical se muestra a su
+// proporción real hasta 2:3 (alto máx = 1.5× el ancho); más alta se topa y
+// aparece el marco oscuro a los costados. Una muy apaisada se topa en 1.91.
+const MIN_ASPECT = 2 / 3; // vertical
+const MAX_ASPECT = 1.91; // horizontal
+const clampAspect = (r: number) =>
+  Math.min(MAX_ASPECT, Math.max(MIN_ASPECT, r));
+
 interface ImageCarouselProps {
   images: string[];
   alt?: string;
@@ -15,6 +23,13 @@ interface ImageCarouselProps {
   /** Override de posición/estilo del contenedor de dots. */
   dotsClassName?: string;
   onIndexChange?: (index: number) => void;
+  /**
+   * Si es true, el carrusel adopta la proporción real de la PRIMERA imagen
+   * (recortada al rango 2:3–1.91) con `object-contain` y fondo oscuro, en vez
+   * de forzar `aspectClassName`. Igual que las imágenes del feed móvil: las
+   * verticales se ven más largas y las que sobran se enmarcan en oscuro.
+   */
+  dynamicAspect?: boolean;
   /** Overlays absolutos (banners, gradientes). Se renderizan sobre la imagen. */
   children?: React.ReactNode;
 }
@@ -38,11 +53,24 @@ export function ImageCarousel({
   showArrowsOnDesktop = true,
   dotsClassName,
   onIndexChange,
+  dynamicAspect = false,
   children,
 }: ImageCarouselProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const [index, setIndex] = useState(0);
+  // Proporción real de la 1ª imagen (solo en modo dynamicAspect).
+  const [measuredAspect, setMeasuredAspect] = useState<number | null>(null);
+
+  // Mide la 1ª imagen en cuanto se conoce su tamaño natural. Se llama tanto
+  // desde onLoad como desde el ref (para imágenes ya cacheadas, cuyo onLoad
+  // puede no dispararse tras la hidratación).
+  const measureFromImg = (img: HTMLImageElement | null) => {
+    if (!img || !dynamicAspect || measuredAspect !== null) return;
+    if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
+      setMeasuredAspect(clampAspect(img.naturalWidth / img.naturalHeight));
+    }
+  };
 
   if (!images || images.length === 0) return null;
 
@@ -73,8 +101,21 @@ export function ImageCarousel({
     el.scrollTo({ left: clamped * el.clientWidth, behavior: "smooth" });
   };
 
+  // En modo dinámico el alto lo marca la proporción medida (fallback cuadrado
+  // mientras se mide) y las fotos van "contain" sobre fondo oscuro (letterbox).
+  const containerClass = dynamicAspect
+    ? "bg-[#0f172a]"
+    : aspectClassName;
+  const containerStyle = dynamicAspect
+    ? { aspectRatio: String(measuredAspect ?? 1) }
+    : undefined;
+  const imgFit = dynamicAspect ? "object-contain" : imageClassName;
+
   return (
-    <div className={`relative w-full ${aspectClassName} overflow-hidden group`}>
+    <div
+      className={`relative w-full ${containerClass} overflow-hidden group`}
+      style={containerStyle}
+    >
       {/* Track scrollable */}
       <div
         ref={scrollerRef}
@@ -88,7 +129,9 @@ export function ImageCarousel({
             alt={`${alt} - ${i + 1}`}
             loading={i === 0 ? "eager" : "lazy"}
             draggable={false}
-            className={`w-full h-full shrink-0 snap-start snap-always ${imageClassName}`}
+            ref={i === 0 ? measureFromImg : undefined}
+            onLoad={i === 0 ? (e) => measureFromImg(e.currentTarget) : undefined}
+            className={`w-full h-full shrink-0 snap-start snap-always ${imgFit}`}
           />
         ))}
       </div>
