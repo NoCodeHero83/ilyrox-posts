@@ -707,7 +707,7 @@ export const SpecialPostCard = ({
           <ImageCarousel
             images={allImages}
             alt="Contenido del post"
-            aspectClassName="aspect-square"
+            dynamicAspect
             showCounter
           />
         </div>
