@@ -423,6 +423,7 @@ export async function GET(request: Request) {
 
         const habitaciones = f.caracteristicas?.habitaciones;
         const banos = f.caracteristicas?.banos;
+        const mediosBanos = f.caracteristicas?.medios_banos;
 
         return new ImageResponse(
           <div
@@ -557,7 +558,7 @@ export async function GET(request: Request) {
             )}
 
             {/* Características */}
-            {(habitaciones || banos) && (
+            {(habitaciones || banos || mediosBanos) && (
               <div
                 style={{
                   display: "flex",
@@ -573,6 +574,9 @@ export async function GET(request: Request) {
                 ) : null}
                 {banos ? (
                   <div style={{ display: "flex" }}>{`Baños: ${banos}`}</div>
+                ) : null}
+                {mediosBanos ? (
+                  <div style={{ display: "flex" }}>{`½ Baños: ${mediosBanos}`}</div>
                 ) : null}
               </div>
             )}
