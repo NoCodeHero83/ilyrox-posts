@@ -73,10 +73,18 @@ export async function generateMetadata({
     }
   }
 
+  // Smart banner de Safari: si la app está instalada la abre, si no lleva al App
+  // Store. `app-argument` es la URL que recibe la app al abrirse.
+  const appleItunesApp =
+    type && id
+      ? `app-id=6756507569, app-argument=${baseUrl}/?type=${type}&id=${id}`
+      : `app-id=6756507569`;
+
   return {
     metadataBase: new URL(baseUrl),
     title,
     description,
+    other: { "apple-itunes-app": appleItunesApp },
     openGraph: {
       title,
       description,

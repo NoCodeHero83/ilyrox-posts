@@ -324,6 +324,7 @@ export const SpecialPostCard = ({
 
     const habitaciones = num(f.caracteristicas?.habitaciones);
     const banos = num(f.caracteristicas?.banos);
+    const mediosBanos = num(f.caracteristicas?.medios_banos);
     const estacionamientos = num(f.caracteristicas?.estacionamientos);
     const niveles = num(f.caracteristicas?.niveles);
     const antiguedad: string =
@@ -354,6 +355,13 @@ export const SpecialPostCard = ({
         emoji: "🚽",
         value: String(banos),
         label: "baños",
+      });
+    if (mediosBanos)
+      stats.push({
+        key: "medban",
+        emoji: "🚽",
+        value: String(mediosBanos),
+        label: "½ baños",
       });
     if (estacionamientos)
       stats.push({
