@@ -11,6 +11,7 @@ import type { Property as GlobalProperty, perfiles } from "../types";
 
 import { DownloadAppModal } from "../Shared/DownloadAppModal";
 import { GeneratedByIlyrox } from "../Shared/GeneratedByIlyrox";
+import { isInAppBrowser, openInApp } from "../../lib/openInApp";
 
 export const PropertyViewer = ({
   id,
@@ -24,6 +25,17 @@ export const PropertyViewer = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    // Dentro de webviews (Instagram, Facebook, WhatsApp, Messenger…) los
+    // universal links no disparan y el usuario se queda atrapado en la web. Si
+    // el link se abrió en un navegador in-app, se intenta abrir la app por su
+    // esquema propio SIN caer a la tienda: si la app no está instalada, la
+    // página sigue funcionando con normalidad.
+    if (isInAppBrowser()) {
+      openInApp({ withStoreFallback: false });
+    }
+  }, []);
 
   useEffect(() => {
     if (!id) return;

@@ -1,9 +1,10 @@
 import { X, Smartphone, Globe, Apple, Play, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
-
-const APP_STORE_URL = "https://apps.apple.com/us/app/ilyrox/id6756507569";
-const PLAY_STORE_URL =
-  "https://play.google.com/store/apps/details?id=com.ilyrox.app&hl=es_BO";
+import {
+  APP_STORE_URL,
+  PLAY_STORE_URL,
+  openInApp,
+} from "../../lib/openInApp";
 
 interface DownloadAppModalProps {
   isOpen: boolean;
@@ -23,31 +24,6 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
   useEffect(() => {
     setIsMobile(/android|iphone|ipad|ipod/i.test(navigator.userAgent));
   }, []);
-
-  /**
-   * Abre la app por su esquema propio y cae a la tienda si no está instalada.
-   *
-   * Existe además del universal link porque dentro de webviews (Instagram,
-   * Facebook) los universal links no disparan y el usuario se queda en la web.
-   * El fallback se cancela si la pestaña se oculta: eso significa que la app sí
-   * tomó el control.
-   */
-  const openInApp = () => {
-    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    const storeUrl = isIOS ? APP_STORE_URL : PLAY_STORE_URL;
-    const search = window.location.search || "";
-
-    const timer = window.setTimeout(() => {
-      if (!document.hidden) window.location.href = storeUrl;
-    }, 1500);
-
-    const cancel = () => {
-      if (document.hidden) window.clearTimeout(timer);
-    };
-    document.addEventListener("visibilitychange", cancel, { once: true });
-
-    window.location.href = `ilyroxapp://${search}`;
-  };
 
   const handleAnimationEnd = () => {
     if (!isOpen) setShouldRender(false);
@@ -105,7 +81,7 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
           <div className="flex flex-col gap-3">
             {isMobile && (
               <button
-                onClick={openInApp}
+                onClick={() => openInApp()}
                 className="flex items-center justify-center gap-3 bg-primary text-white p-4 rounded-2xl hover:opacity-90 transition-all hover:scale-[1.02] active:scale-100 shadow-lg"
               >
                 <ExternalLink className="w-5 h-5" />
