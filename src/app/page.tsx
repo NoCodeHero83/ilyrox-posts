@@ -162,8 +162,8 @@ export default async function Page({
     <main className="pt-0 flex flex-col items-center">
       <div className="w-full transition-all duration-500 ease-in-out">
         {type === "property" && <PropertyViewer id={id} hideData={hideData} />}
-        {type === "reel" && <ReelViewer id={id} />}
-        {type === "post" && <PostViewer id={id} />}
+        {type === "reel" && <ReelViewer id={id} hideData={hideData} />}
+        {type === "post" && <PostViewer id={id} hideData={hideData} />}
       </div>
     </main>
   );

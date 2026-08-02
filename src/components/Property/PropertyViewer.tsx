@@ -11,6 +11,7 @@ import type { Property as GlobalProperty, perfiles } from "../types";
 
 import { DownloadAppModal } from "../Shared/DownloadAppModal";
 import { GeneratedByIlyrox } from "../Shared/GeneratedByIlyrox";
+import { AppDownloadBar } from "../Shared/AppDownloadBar";
 import { isInAppBrowser, openInApp } from "../../lib/openInApp";
 
 export const PropertyViewer = ({
@@ -25,6 +26,11 @@ export const PropertyViewer = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(/android|iphone|ipad|ipod/i.test(navigator.userAgent));
+  }, []);
 
   useEffect(() => {
     // Dentro de webviews (Instagram, Facebook, WhatsApp, Messenger…) los
@@ -53,13 +59,28 @@ export const PropertyViewer = ({
           };
           setProperty(propertyWithAmenities);
 
-          // Fetch agent profile
-          const userId =
-            (data as any).publicado_por || (data as any).created_by;
-          if (userId && typeof userId === "string") {
-            const profile = await getProfileById(userId);
-            if (profile) {
-              setAgent(profile);
+          // Fetch agent profile — prioriza quien COMPARTIÓ el link
+          // (?sharedBy=<id> en la URL) sobre quien publicó/creó el
+          // contenido originalmente. Si el link no trae `sharedBy` (links
+          // viejos, o compartido antes de este cambio), cae al
+          // comportamiento anterior.
+          //
+          // En modo "sin datos" (hideData) NO se busca ni se muestra
+          // ningún agente — ni el creador ni quien compartió. Ese es
+          // justamente el propósito de "sin datos": cero información
+          // personal, ni siquiera con un fetch de red de por medio.
+          if (!hideData) {
+            const params = new URLSearchParams(window.location.search);
+            const sharedByParam = params.get("sharedBy");
+            const userId =
+              (sharedByParam && sharedByParam.trim()) ||
+              (data as any).publicado_por ||
+              (data as any).created_by;
+            if (userId && typeof userId === "string") {
+              const profile = await getProfileById(userId);
+              if (profile) {
+                setAgent(profile);
+              }
             }
           }
         } else {
@@ -74,7 +95,7 @@ export const PropertyViewer = ({
     };
 
     fetchProperty();
-  }, [id]);
+  }, [id, hideData]);
 
   if (loading) {
     return (
@@ -98,7 +119,7 @@ export const PropertyViewer = ({
   }
 
   return (
-    <>
+    <div className="flex flex-col items-center w-full pb-24 md:pb-0">
       <div className="bg-white rounded-none md:rounded-[2.5rem] shadow-sm md:border md:border-gray-100 p-0 md:p-8 max-w-3xl mx-auto overflow-hidden">
         {/* Agent Header */}
         {agent && !hideData && (
@@ -127,6 +148,8 @@ export const PropertyViewer = ({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
-    </>
+
+      {isMobile && <AppDownloadBar />}
+    </div>
   );
 };

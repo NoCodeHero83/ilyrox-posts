@@ -4,15 +4,27 @@ import { getReelById } from "../../services/reelService";
 import { getProfileById } from "../../services/userService";
 import { DownloadAppModal } from "../Shared/DownloadAppModal";
 import { GeneratedByIlyrox } from "../Shared/GeneratedByIlyrox";
+import { AppDownloadBar } from "../Shared/AppDownloadBar";
 import type { Reel, perfiles } from "../types";
 import Avatar from "../Shared/Avatar";
 
-export const ReelViewer = ({ id }: { id?: string }) => {
+export const ReelViewer = ({
+  id,
+  hideData,
+}: {
+  id?: string;
+  hideData?: boolean;
+}) => {
   const [reel, setReel] = useState<Reel | null>(null);
   const [agent, setAgent] = useState<perfiles | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(/android|iphone|ipad|ipod/i.test(navigator.userAgent));
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -24,8 +36,9 @@ export const ReelViewer = ({ id }: { id?: string }) => {
         if (data) {
           setReel(data);
 
-          // Fetch user profile
-          if (data.publicado_por) {
+          // Fetch user profile — en modo "sin datos" (hideData) no se
+          // busca ni se muestra ningún agente.
+          if (!hideData && data.publicado_por) {
             const profile = await getProfileById(data.publicado_por);
             if (profile) {
               setAgent(profile);
@@ -43,7 +56,7 @@ export const ReelViewer = ({ id }: { id?: string }) => {
     };
 
     fetchReel();
-  }, [id]);
+  }, [id, hideData]);
 
   if (loading) {
     return (
@@ -65,33 +78,35 @@ export const ReelViewer = ({ id }: { id?: string }) => {
   }
 
   return (
-    <div className="flex flex-col items-center w-full">
+    <div className="flex flex-col items-center w-full pb-24">
       <div className="flex flex-col bg-black border border-gray-800 shadow-2xl overflow-hidden relative max-w-lg mx-auto aspect-auto">
-        {/* Transparent Header with User Info */}
-        <div
-          onClick={() => setIsModalOpen(true)}
-          className="absolute top-0 left-0 right-0 z-10 p-6 bg-linear-to-b from-black/60 to-transparent flex items-center gap-3 cursor-pointer group"
-        >
-          <div className="w-10 h-10 rounded-full border-2 border-white/20 overflow-hidden group-hover:scale-110 transition-transform duration-300 shadow-xl">
-            {agent?.foto ? (
-              <img
-                src={agent.foto}
-                alt={agent.nombre}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <Avatar name={agent?.nombre || "Usuario"} size={40} />
-            )}
+        {/* Transparent Header with User Info — oculto en modo "sin datos" */}
+        {!hideData && (
+          <div
+            onClick={() => setIsModalOpen(true)}
+            className="absolute top-0 left-0 right-0 z-10 p-6 bg-linear-to-b from-black/60 to-transparent flex items-center gap-3 cursor-pointer group"
+          >
+            <div className="w-10 h-10 rounded-full border-2 border-white/20 overflow-hidden group-hover:scale-110 transition-transform duration-300 shadow-xl">
+              {agent?.foto ? (
+                <img
+                  src={agent.foto}
+                  alt={agent.nombre}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Avatar name={agent?.nombre || "Usuario"} size={40} />
+              )}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-white font-bold text-shadow-sm group-hover:text-primary transition-colors">
+                {agent?.nombre_completo || "Usuario"}
+              </span>
+              <span className="text-white/60 text-xs text-shadow-sm">
+                Ver perfil
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <span className="text-white font-bold text-shadow-sm group-hover:text-primary transition-colors">
-              {agent?.nombre_completo || "Usuario"}
-            </span>
-            <span className="text-white/60 text-xs text-shadow-sm">
-              Ver perfil
-            </span>
-          </div>
-        </div>
+        )}
 
         <video
           src={reel.video_url}
@@ -118,6 +133,8 @@ export const ReelViewer = ({ id }: { id?: string }) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
+
+      {isMobile && <AppDownloadBar />}
     </div>
   );
 };
