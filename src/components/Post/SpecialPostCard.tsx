@@ -435,6 +435,40 @@ export const SpecialPostCard = ({
         className={`w-full bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden ${isDetail ? "" : "max-w-md mx-auto"}`}
       >
         <div className="p-5 md:p-6">
+          {/* Header de agente/quien compartió — mismo patrón visual que
+              las otras ramas del archivo (isTextOnly, DEFAULT RENDER).
+              userName/userAvatar ya reflejan correctamente a quien
+              compartió el link (sharedBy) o al creador, según corresponda;
+              este bloque solo hacía falta agregarlo aquí. */}
+          <div
+            className="flex items-center gap-3 mb-4 cursor-pointer hover:bg-gray-50 p-2 -m-2 rounded-2xl transition-colors group"
+            onClick={onUserClick}
+          >
+            <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden group-hover:scale-105 transition-transform duration-300">
+              {userAvatar ? (
+                <img
+                  src={userAvatar}
+                  alt="User"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-[#0891b2]/20 flex items-center justify-center text-[#0891b2] font-bold">
+                  U
+                </div>
+              )}
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 group-hover:text-[#0891b2] transition-colors">
+                {userName}
+              </h3>
+              <p className="text-xs text-gray-500">
+                {post.created_at
+                  ? new Date(post.created_at).toLocaleDateString()
+                  : "Reciente"}
+              </p>
+            </div>
+          </div>
+
           {/* SE BUSCA + Operación(es) */}
           <div className="flex items-center flex-wrap gap-2 mb-3">
             <Search className="w-4 h-4 text-primary" />

@@ -105,12 +105,6 @@ export const PostViewer = ({
 
   return (
     <div className="flex flex-col items-center w-full mt-12 pb-24">
-      {true && (
-        <pre style={{ fontSize: 10, background: "#000", color: "#0f0", padding: 8, whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
-          {JSON.stringify({ hideData, sharerOverride, hasPost: !!post }, null, 2)}
-        </pre>
-      )}
-
       <div className="flex justify-center w-full">
         <SpecialPostCard
           post={displayPost}
