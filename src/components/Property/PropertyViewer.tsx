@@ -120,12 +120,6 @@ export const PropertyViewer = ({
 
   return (
     <div className="flex flex-col items-center w-full pb-24 md:pb-0">
-      {true && (
-        <pre style={{ fontSize: 10, background: "#000", color: "#0f0", padding: 8, whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
-          {JSON.stringify({ hideData, agent, hasProperty: !!property }, null, 2)}
-        </pre>
-      )}
-
       <div className="bg-white rounded-none md:rounded-[2.5rem] shadow-sm md:border md:border-gray-100 p-0 md:p-8 max-w-3xl mx-auto overflow-hidden">
         {/* Agent Header */}
         {agent && !hideData && (
