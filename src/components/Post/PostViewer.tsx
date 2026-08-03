@@ -108,6 +108,7 @@ export const PostViewer = ({
       <div className="flex justify-center w-full">
         <SpecialPostCard
           post={displayPost}
+          hideData={hideData}
           mode="detail"
           onUserClick={() => setIsModalOpen(true)}
           onOfferClick={() => setIsModalOpen(true)}
