@@ -24,6 +24,7 @@ dist-ssr
 *.sw?
 .env
 ilyrox-web-share.zip
+*.zip
 ilyrox-web-share
 .next
 .next/trace
